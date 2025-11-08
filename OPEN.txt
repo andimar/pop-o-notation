@@ -1,0 +1,48 @@
+🎵 CHORDCHART - Band-in-a-Box Style
+
+Per aprire l'applicazione:
+1. Apri il file "index.html" con il tuo browser
+2. Oppure trascina "index.html" nel browser
+
+L'applicazione è completamente offline e funziona senza server!
+
+📋 CARATTERISTICHE:
+
+✅ Layout griglia stile Band-in-a-Box
+✅ Battute numerate automaticamente  
+✅ Sezioni organizzate (Intro, Verse, Chorus, Bridge, etc.)
+✅ Visualizzazione 4x4 (4 battute per riga)
+✅ **Autoscroll automatico** durante playback
+✅ Playback audio degli accordi con Web Audio API
+✅ Metronomo integrato con accenti dinamici
+✅ **Sistema Playlist** per organizzare le canzoni
+✅ **Player Mode Fullscreen** per performance live
+✅ Backend PHP + SQLite per persistenza dati
+✅ Autenticazione utenti (JWT)
+✅ Salvataggio automatico
+✅ Import/Export di charts e playlist
+✅ Responsive per mobile/tablet
+✅ Anteprima in tempo reale
+
+🎹 SINTASSI VELOCE:
+
+Titolo - Artista - 120bpm
+
+[Intro]
+C | Dm | G7 | C
+
+[Verse]  
+Am | Dm | G7 | C
+F | Em | Dm | G7
+
+[Chorus]
+C C | F F | G7 G7 | C C
+
+📝 TIPS:
+- Usa | per separare le battute
+- Metti più accordi nella stessa battuta: Am Dm
+- Usa [Nome Sezione] per organizzare la chart
+- Clicca Play per ascoltare gli accordi!
+
+Buona musica! 🎸🎹🎵
+

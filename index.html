@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChordChart - Creatore veloce di spartiti</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <h1>🎵 ChordChart</h1>
+            <div class="header-actions">
+                <!-- User Menu (logged in) -->
+                <div class="user-menu" id="userMenu" style="display: none;">
+                    <span id="userMenuUsername">User</span>
+                    <button id="syncBtn" class="btn btn-secondary" title="Sincronizza dati">🔄 Sync</button>
+                    <button id="logoutBtn" class="btn btn-ghost">Logout</button>
+                </div>
+                <!-- Login Button (logged out) -->
+                <button id="loginMenuBtn" class="btn btn-secondary">🔐 Login</button>
+                
+                <button id="togglePlaylistBtn" class="btn btn-secondary">
+                    📋 Playlist
+                </button>
+                <button id="toggleViewBtn" class="btn btn-secondary">
+                    <span id="viewIcon">📝</span> <span id="viewText">Editor</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Editor View -->
+            <div id="editorView" class="view active">
+                <div class="editor-container">
+                    <div class="editor-header">
+                        <h2>Crea Chord Chart</h2>
+                        <div class="editor-actions">
+                            <button id="clearBtn" class="btn btn-ghost">🗑️ Cancella</button>
+                            <button id="saveBtn" class="btn btn-primary">💾 Salva</button>
+                        </div>
+                    </div>
+                    
+                    <div class="editor-grid">
+                        <!-- Input Area -->
+                        <div class="input-section">
+                            <div class="input-help">
+                                <strong>Sintassi Band-in-a-Box:</strong>
+                                <code>Titolo - Artista - 120bpm - 4/4</code><br>
+                                <code>[Intro] [Verse] [Chorus] sezioni</code><br>
+                                <code>Cm7 | Fm7 | Bb7 | Eb accordi</code><br>
+                                <small>🥁 Il click segue il tempo della canzone</small>
+                            </div>
+                            <textarea 
+                                id="chartInput" 
+                                class="chart-input" 
+                                placeholder="Scrivi qui la tua chord chart...">VALERIE - Amy Winehouse - 84bpm - 4/4
+
+[Intro]
+Eb△ | Eb△ | Fm7 | Fm7
+Eb△ | Eb△ | Fm7 | Fm7
+
+[Verse]
+Ab△ | Bbm | Ab△ | Bbm
+Ab△ | Bbm | Bb7 | Eb△
+
+[Chorus]
+Eb△ | Eb△ | Fm7 | Fm7
+Ab△ | Bbm | Ab△ | Bbm
+Ab△ | Bbm | Bb7 | Eb△</textarea>
+                        </div>
+
+                        <!-- Preview Area -->
+                        <div class="preview-section">
+                            <div class="preview-header">
+                                <h3>Anteprima</h3>
+                                <div class="preview-controls">
+                                    <label class="metronome-toggle" id="metronomeToggle" style="display: none;">
+                                        <input type="checkbox" id="metronomeCheckbox" checked>
+                                        <span>🥁 Click</span>
+                                    </label>
+                                    <button id="playBtn" class="btn btn-secondary" style="display: none;">
+                                        ▶️ Play
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="chartPreview" class="chart-preview">
+                                <div class="empty-state">
+                                    <p>👆 Inizia a scrivere per vedere l'anteprima</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Playlist View -->
+            <div id="playlistView" class="view">
+                <div class="playlist-container">
+                    <div class="playlist-header">
+                        <h2>Playlist</h2>
+                        <div class="playlist-actions">
+                            <button id="createPlaylistBtn" class="btn btn-primary">➕ Nuova Playlist</button>
+                            <button id="importPlaylistBtn" class="btn btn-secondary">📥 Importa</button>
+                        </div>
+                    </div>
+                    
+                    <div id="playlistsList" class="playlists-list">
+                        <div class="empty-state">
+                            <p>📋 Nessuna playlist creata</p>
+                            <p class="empty-state-hint">Crea una playlist per organizzare le tue canzoni!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Library View -->
+            <div id="libraryView" class="view">
+                <div class="library-container">
+                    <div class="library-header">
+                        <h2>Le Mie Charts</h2>
+                        <div class="library-actions">
+                            <button id="importBtn" class="btn btn-secondary">📥 Importa</button>
+                            <button id="exportAllBtn" class="btn btn-secondary">📤 Esporta Tutto</button>
+                        </div>
+                    </div>
+                    
+                    <div id="chartsList" class="charts-list">
+                        <div class="empty-state">
+                            <p>📂 Nessuna chart salvata ancora</p>
+                            <p class="empty-state-hint">Crea la tua prima chart dall'editor!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Create/Edit Playlist Modal -->
+            <div id="playlistModal" class="modal">
+                <div class="modal-content modal-small">
+                    <div class="modal-header">
+                        <h2 id="playlistModalTitle">Nuova Playlist</h2>
+                        <button id="closePlaylistModalBtn" class="btn btn-ghost">✕</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="playlistNameInput">Nome Playlist</label>
+                            <input type="text" id="playlistNameInput" class="form-input" placeholder="Es: Jazz Standards, Mie Composizioni...">
+                        </div>
+                        <div class="form-group">
+                            <label for="playlistDescInput">Descrizione (opzionale)</label>
+                            <textarea id="playlistDescInput" class="form-input" rows="3" placeholder="Descrizione della playlist..."></textarea>
+                        </div>
+                        <div class="modal-footer">
+                            <button id="cancelPlaylistBtn" class="btn btn-ghost">Annulla</button>
+                            <button id="savePlaylistBtn" class="btn btn-primary">Salva</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- View Playlist Details -->
+            <div id="viewPlaylistModal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 id="playlistDetailTitle">Playlist</h2>
+                        <div class="modal-actions">
+                            <button id="playPlaylistBtn" class="btn btn-primary">▶️ Play All</button>
+                            <button id="exportPlaylistBtn" class="btn btn-secondary">📤 Esporta</button>
+                            <button id="editPlaylistBtn" class="btn btn-secondary">✏️ Modifica</button>
+                            <button id="deletePlaylistBtn" class="btn btn-danger">🗑️</button>
+                            <button id="closePlaylistDetailBtn" class="btn btn-ghost">✕</button>
+                        </div>
+                    </div>
+                    <div id="playlistDetailContent" class="playlist-detail-content">
+                        <div class="playlist-songs-list"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- View Single Chart -->
+            <div id="viewChartModal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 id="modalTitle">Chart</h2>
+                        <div class="modal-actions">
+                            <button id="addToPlaylistBtn" class="btn btn-secondary">➕ Aggiungi a Playlist</button>
+                            <button id="playModalBtn" class="btn btn-primary" style="display: none;">▶️ Play</button>
+                            <button id="editChartBtn" class="btn btn-secondary">✏️ Modifica</button>
+                            <button id="deleteChartBtn" class="btn btn-danger">🗑️</button>
+                            <button id="closeModalBtn" class="btn btn-ghost">✕</button>
+                        </div>
+                    </div>
+                    <div id="modalChartContent" class="modal-chart-content"></div>
+                </div>
+            </div>
+
+            <!-- Add to Playlist Selection -->
+            <div id="addToPlaylistModal" class="modal">
+                <div class="modal-content modal-small">
+                    <div class="modal-header">
+                        <h2>Aggiungi a Playlist</h2>
+                        <button id="closeAddToPlaylistBtn" class="btn btn-ghost">✕</button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="playlistSelectionList" class="playlist-selection-list"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Authentication Modal -->
+            <div id="authModal" class="modal">
+                <div class="modal-content modal-small">
+                    <div class="modal-header">
+                        <h2 id="authModalTitle">Login</h2>
+                        <button id="closeAuthModalBtn" class="btn btn-ghost">✕</button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- Login Form -->
+                        <div id="loginForm" class="auth-form">
+                            <div class="form-group">
+                                <label for="loginUsername">Username o Email</label>
+                                <input type="text" id="loginUsername" class="form-input" placeholder="username" autocomplete="username">
+                            </div>
+                            <div class="form-group">
+                                <label for="loginPassword">Password</label>
+                                <input type="password" id="loginPassword" class="form-input" placeholder="••••••••" autocomplete="current-password">
+                            </div>
+                            <div class="modal-footer">
+                                <button id="switchToRegisterBtn" class="btn btn-ghost">Non hai un account? Registrati</button>
+                                <button id="loginSubmitBtn" class="btn btn-primary">Login</button>
+                            </div>
+                        </div>
+
+                        <!-- Register Form -->
+                        <div id="registerForm" class="auth-form" style="display: none;">
+                            <div class="form-group">
+                                <label for="registerUsername">Username</label>
+                                <input type="text" id="registerUsername" class="form-input" placeholder="username" autocomplete="username">
+                            </div>
+                            <div class="form-group">
+                                <label for="registerEmail">Email</label>
+                                <input type="email" id="registerEmail" class="form-input" placeholder="email@example.com" autocomplete="email">
+                            </div>
+                            <div class="form-group">
+                                <label for="registerPassword">Password</label>
+                                <input type="password" id="registerPassword" class="form-input" placeholder="••••••••" autocomplete="new-password">
+                            </div>
+                            <div class="form-group">
+                                <label for="registerPasswordConfirm">Conferma Password</label>
+                                <input type="password" id="registerPasswordConfirm" class="form-input" placeholder="••••••••" autocomplete="new-password">
+                            </div>
+                            <div class="modal-footer">
+                                <button id="switchToLoginBtn" class="btn btn-ghost">Hai già un account? Login</button>
+                                <button id="registerSubmitBtn" class="btn btn-primary">Registrati</button>
+                            </div>
+                        </div>
+
+                        <!-- Sync Status -->
+                        <div id="syncStatus" style="display: none; margin-top: 1rem; padding: 1rem; background: var(--bg-input); border-radius: 0.5rem;">
+                            <p id="syncMessage" style="margin: 0; color: var(--text-secondary);"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Toast Notifications -->
+        <div id="toast" class="toast"></div>
+    </div>
+
+    <input type="file" id="importFileInput" style="display: none;" accept=".json">
+    <input type="file" id="importPlaylistInput" style="display: none;" accept=".json">
+
+    <script src="audio-player.js"></script>
+    <script src="playlist-manager.js"></script>
+    <script src="api-client.js"></script>
+    <script src="auth-manager.js"></script>
+    <script src="app.js"></script>
+    <script src="app-playlist.js"></script>
+</body>
+</html>
+

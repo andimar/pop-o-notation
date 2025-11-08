@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChordChart Player</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="player-styles.css">
+</head>
+<body>
+    <div class="player-container">
+        <!-- Player Header -->
+        <header class="player-header">
+            <button id="backBtn" class="control-btn">← Indietro</button>
+            <div class="player-info">
+                <h1 id="playerTitle">Song Title</h1>
+                <p id="playerMeta">Artist • 120 BPM • 4/4</p>
+            </div>
+            <button id="fullscreenBtn" class="control-btn">⛶ Fullscreen</button>
+        </header>
+
+        <!-- Chart Display Area -->
+        <main id="playerChart" class="player-chart">
+            <div class="loading-state">
+                <p>Caricamento...</p>
+            </div>
+        </main>
+
+        <!-- Player Controls -->
+        <footer class="player-controls">
+            <div class="controls-row">
+                <!-- Navigation (if playlist) -->
+                <div class="nav-controls">
+                    <button id="prevSongBtn" class="control-btn" disabled>⏮ Prec</button>
+                    <button id="nextSongBtn" class="control-btn" disabled>⏭ Succ</button>
+                </div>
+
+                <!-- Playback Controls -->
+                <div class="playback-controls">
+                    <button id="playBtn" class="control-btn-primary">
+                        ▶️ Play
+                    </button>
+                    <button id="stopBtn" class="control-btn" disabled>
+                        ⏹ Stop
+                    </button>
+                </div>
+
+                <!-- Settings -->
+                <div class="settings-controls">
+                    <label class="toggle-control">
+                        <input type="checkbox" id="metronomeToggle" checked>
+                        <span>🥁 Click</span>
+                    </label>
+                    <label class="toggle-control">
+                        <input type="checkbox" id="autoscrollToggle" checked>
+                        <span>📜 Auto-scroll</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="progress-container">
+                <div id="progressBar" class="progress-bar">
+                    <div id="progressFill" class="progress-fill"></div>
+                </div>
+                <div class="progress-info">
+                    <span id="currentBar">Battuta: 0</span>
+                    <span id="totalBars">/ 0</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="audio-player.js"></script>
+    <script src="player.js"></script>
+</body>
+</html>
+
