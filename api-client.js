@@ -4,10 +4,49 @@
 
 class APIClient {
     constructor() {
-        // API Configuration - CHANGE THIS to your API URL
-        this.baseURL = '/api'; // or 'http://localhost/chordchart/api'
+        // API Configuration
+        const config = window.AppConfig || {};
+        
+        // Se c'è un URL API completo, usalo
+        if (config.apiBaseURL) {
+            this.baseURL = config.apiBaseURL;
+        } else {
+            // Altrimenti costruisci dall'ambiente
+            let projectPath = config.projectPath;
+            
+            // Se 'auto', rileva automaticamente
+            if (!projectPath || projectPath === 'auto') {
+                projectPath = this.detectProjectPath();
+            }
+            
+            this.baseURL = projectPath ? `${projectPath}/api` : '/api';
+        }
+        
+        this.debug = config.debug || false;
+        
+        if (this.debug) {
+            console.log('🔧 API Client initialized');
+            console.log('📍 Base URL:', this.baseURL);
+        }
+        
         this.token = localStorage.getItem('auth_token');
         this.user = JSON.parse(localStorage.getItem('auth_user') || 'null');
+    }
+    
+    /**
+     * Rileva automaticamente il path base del progetto
+     * Se index.html è in /notation/, questa funzione lo rileva
+     */
+    detectProjectPath() {
+        // Prova a rilevare dal path corrente
+        const path = window.location.pathname;
+        
+        // Rimuovi il file finale (es. index.html)
+        const dir = path.substring(0, path.lastIndexOf('/'));
+        
+        // Se siamo nella root, ritorna stringa vuota
+        // Altrimenti ritorna il percorso (es. '/notation')
+        return dir === '' || dir === '/' ? '' : dir;
     }
 
     /**
@@ -36,6 +75,15 @@ class APIClient {
 
         try {
             const response = await fetch(url, config);
+            
+            // Check if response is JSON
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const text = await response.text();
+                console.error('Non-JSON response received:', text.substring(0, 200));
+                throw new Error('Il server API non è configurato correttamente. Verifica che il file api/index.php sia accessibile.');
+            }
+
             const data = await response.json();
 
             if (!response.ok) {
@@ -52,7 +100,7 @@ class APIClient {
     // ==================== AUTH ====================
 
     async register(username, email, password) {
-        const response = await this.request('/auth/register', {
+        const response = await this.request('/auth/register.php', {
             method: 'POST',
             body: { username, email, password }
         });
@@ -61,7 +109,7 @@ class APIClient {
     }
 
     async login(username, password) {
-        const response = await this.request('/auth/login', {
+        const response = await this.request('/auth/login.php', {
             method: 'POST',
             body: { username, password }
         });
@@ -84,7 +132,7 @@ class APIClient {
     }
 
     async getCurrentUser() {
-        const response = await this.request('/auth/me');
+        const response = await this.request('/auth/me.php');
         return response.data;
     }
 
@@ -95,17 +143,17 @@ class APIClient {
     // ==================== CHARTS ====================
 
     async getCharts() {
-        const response = await this.request('/charts');
+        const response = await this.request('/charts/list.php');
         return response.data;
     }
 
     async getChart(id) {
-        const response = await this.request(`/charts/${id}`);
+        const response = await this.request(`/charts/list.php?id=${id}`);
         return response.data;
     }
 
     async createChart(chartData) {
-        const response = await this.request('/charts', {
+        const response = await this.request('/charts/create.php', {
             method: 'POST',
             body: {
                 title: chartData.chart.title,
@@ -122,8 +170,8 @@ class APIClient {
     }
 
     async updateChart(id, chartData) {
-        const response = await this.request(`/charts/${id}`, {
-            method: 'PUT',
+        const response = await this.request(`/charts/update.php?id=${id}`, {
+            method: 'POST',
             body: {
                 title: chartData.chart?.title,
                 artist: chartData.chart?.artist,
@@ -139,8 +187,8 @@ class APIClient {
     }
 
     async deleteChart(id) {
-        const response = await this.request(`/charts/${id}`, {
-            method: 'DELETE'
+        const response = await this.request(`/charts/delete.php?id=${id}`, {
+            method: 'POST'
         });
 
         return response.data;
@@ -149,17 +197,17 @@ class APIClient {
     // ==================== PLAYLISTS ====================
 
     async getPlaylists() {
-        const response = await this.request('/playlists');
+        const response = await this.request('/playlists/list.php');
         return response.data;
     }
 
     async getPlaylist(id) {
-        const response = await this.request(`/playlists/${id}`);
+        const response = await this.request(`/playlists/list.php?id=${id}`);
         return response.data;
     }
 
     async createPlaylist(name, description) {
-        const response = await this.request('/playlists', {
+        const response = await this.request('/playlists/create.php', {
             method: 'POST',
             body: { name, description }
         });
@@ -168,8 +216,8 @@ class APIClient {
     }
 
     async updatePlaylist(id, name, description) {
-        const response = await this.request(`/playlists/${id}`, {
-            method: 'PUT',
+        const response = await this.request(`/playlists/update.php?id=${id}`, {
+            method: 'POST',
             body: { name, description }
         });
 
@@ -177,15 +225,15 @@ class APIClient {
     }
 
     async deletePlaylist(id) {
-        const response = await this.request(`/playlists/${id}`, {
-            method: 'DELETE'
+        const response = await this.request(`/playlists/delete.php?id=${id}`, {
+            method: 'POST'
         });
 
         return response.data;
     }
 
     async addSongToPlaylist(playlistId, chartId) {
-        const response = await this.request(`/playlists/${playlistId}/songs`, {
+        const response = await this.request(`/playlists/add-song.php?id=${playlistId}`, {
             method: 'POST',
             body: { chart_id: chartId }
         });
@@ -194,16 +242,16 @@ class APIClient {
     }
 
     async removeSongFromPlaylist(playlistId, chartId) {
-        const response = await this.request(`/playlists/${playlistId}/songs/${chartId}`, {
-            method: 'DELETE'
+        const response = await this.request(`/playlists/remove-song.php?id=${playlistId}&chart_id=${chartId}`, {
+            method: 'POST'
         });
 
         return response.data;
     }
 
     async reorderPlaylist(playlistId, songIds) {
-        const response = await this.request(`/playlists/${playlistId}/reorder`, {
-            method: 'PUT',
+        const response = await this.request(`/playlists/reorder.php?id=${playlistId}`, {
+            method: 'POST',
             body: { song_ids: songIds }
         });
 
