@@ -138,6 +138,30 @@ class ChordChartPlayer {
         
         const html = this.generateChartHTML(this.currentChart);
         this.playerChart.innerHTML = html;
+        
+        // Aggiungi click listeners alle battute per farle partire da lì
+        this.addBarClickListeners();
+    }
+    
+    addBarClickListeners() {
+        const barCells = this.playerChart.querySelectorAll('.bar-cell');
+        barCells.forEach(barCell => {
+            barCell.addEventListener('click', (e) => {
+                const barNumberEl = barCell.querySelector('.bar-number');
+                if (barNumberEl && this.currentChart) {
+                    const barNumber = parseInt(barNumberEl.textContent);
+                    
+                    // Ferma riproduzione corrente se in corso
+                    if (this.audioPlayer.isPlaying) {
+                        this.audioPlayer.stop();
+                    }
+                    
+                    // Riproduci da questa battuta
+                    this.audioPlayer.playChart(this.currentChart, barNumber);
+                    this.updatePlayButton(true);
+                }
+            });
+        });
     }
     
     generateChartHTML(chart) {
@@ -176,8 +200,24 @@ class ChordChartPlayer {
                 html += `<div class="bar-number">${bar.number}</div>`;
                 html += '<div class="bar-content">';
                 
-                for (const chord of bar.chords) {
-                    html += `<span class="chord-symbol">${this.escapeHtml(chord)}</span>`;
+                for (const chordObj of bar.chords) {
+                    // Supporta oggetti con durata e stringhe semplici
+                    if (typeof chordObj === 'object' && chordObj.chord !== undefined) {
+                        const chordDisplay = chordObj.isRest ? '𝄽' : this.escapeHtml(chordObj.chord);
+                        const durationSymbol = this.getDurationSymbol(chordObj.duration);
+                        const chordClass = chordObj.isRest ? 'chord-symbol chord-rest' : 'chord-symbol';
+                        
+                        html += `<span class="${chordClass}">`;
+                        html += chordDisplay;
+                        if (chordObj.duration) {
+                            html += `<span class="duration-indicator">${durationSymbol}</span>`;
+                        }
+                        html += '</span>';
+                    } else {
+                        // Retrocompatibilità: stringa semplice
+                        const chordStr = typeof chordObj === 'string' ? chordObj : chordObj.chord || '';
+                        html += `<span class="chord-symbol">${this.escapeHtml(chordStr)}</span>`;
+                    }
                 }
                 
                 html += '</div>';
@@ -340,6 +380,28 @@ class ChordChartPlayer {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+    
+    /**
+     * Converte simbolo durata in simbolo musicale Unicode
+     */
+    getDurationSymbol(duration) {
+        if (!duration) return '';
+        
+        const symbols = {
+            'w': '𝅝',   // whole note
+            'w.': '𝅝.',  // dotted whole note
+            'h': '𝅗𝅥',   // half note
+            'h.': '𝅗𝅥.', // dotted half note
+            'q': '♩',   // quarter note
+            'q.': '♩.', // dotted quarter note
+            'e': '♪',   // eighth note
+            'e.': '♪.', // dotted eighth note
+            's': '𝅘𝅥𝅯',   // sixteenth note
+            's.': '𝅘𝅥𝅯.'  // dotted sixteenth note
+        };
+        
+        return symbols[duration] || duration;
     }
 }
 

@@ -47,11 +47,35 @@
                         <!-- Input Area -->
                         <div class="input-section">
                             <div class="input-help">
-                                <strong>Sintassi Band-in-a-Box:</strong>
+                                <strong>Sintassi con Durate Musicali:</strong>
                                 <code>Titolo - Artista - 120bpm - 4/4</code><br>
                                 <code>[Intro] [Verse] [Chorus] sezioni</code><br>
-                                <code>Cm7 | Fm7 | Bb7 | Eb accordi</code><br>
-                                <small>🥁 Il click segue il tempo della canzone</small>
+                                <code>Cm7h | Fm7q Bb7q | Ebw accordi con durate</code><br>
+                                <strong>Durate:</strong> w=𝅝(4), h=𝅗𝅥(2), q=♩(1), e=♪(0.5), s=𝅘𝅥𝅯(0.25) | <strong>Pause:</strong> -h, rq<br>
+                                <strong>Simboli:</strong> △=Maj7, °=dim, ø=m7b5, +=aug, ♯=#, ♭=b, /=bass<br>
+                                <small>🥁 Il click segue il tempo e le durate | 📖 Vedi <a href="SIMBOLI-ACCORDI.md" target="_blank" style="color: #3b82f6;">Guida Simboli</a></small>
+                            </div>
+                            <div class="duration-helper">
+                                <button class="duration-btn" data-duration="w" title="Whole note (4 battiti)">𝅝 w</button>
+                                <button class="duration-btn" data-duration="h" title="Half note (2 battiti)">𝅗𝅥 h</button>
+                                <button class="duration-btn" data-duration="q" title="Quarter note (1 battito)">♩ q</button>
+                                <button class="duration-btn" data-duration="e" title="Eighth note (0.5 battiti)">♪ e</button>
+                                <button class="duration-btn" data-duration="s" title="Sixteenth note (0.25 battiti)">𝅘𝅥𝅯 s</button>
+                                <button class="duration-btn" data-duration="-" title="Pausa">𝄽 -</button>
+                                <button class="duration-btn" data-duration="." title="Nota puntata (+50%)">. punto</button>
+                            </div>
+                            
+                            <div class="symbols-helper">
+                                <strong style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem; display: block;">🎼 Simboli Accordi:</strong>
+                                <button class="symbol-btn" data-symbol="△" title="Settima Maggiore">△ Maj7</button>
+                                <button class="symbol-btn" data-symbol="°" title="Diminuito">° dim</button>
+                                <button class="symbol-btn" data-symbol="ø" title="Semidiminuito">ø m7b5</button>
+                                <button class="symbol-btn" data-symbol="+" title="Aumentato">+ aug</button>
+                                <button class="symbol-btn" data-symbol="♯" title="Diesis">♯ #</button>
+                                <button class="symbol-btn" data-symbol="♭" title="Bemolle">♭ b</button>
+                                <button class="symbol-btn" data-symbol="sus" title="Sospeso">sus</button>
+                                <button class="symbol-btn" data-symbol="add" title="Aggiunto">add</button>
+                                <button class="symbol-btn" data-symbol="/" title="Slash chord">/ bass</button>
                             </div>
                             <textarea 
                                 id="chartInput" 

@@ -2,6 +2,18 @@
 
 Collezione di esempi da copiare e incollare nell'app.
 
+## 🎵 Guida Rapida Durate
+
+- `w` = semibreve (4 battiti) 𝅝
+- `h` = minima (2 battiti) 𝅗𝅥
+- `q` = semiminima (1 battito) ♩
+- `e` = croma (0.5 battiti) ♪
+- `s` = semicroma (0.25 battiti) 𝅘𝅥𝅯
+- `.` = punto (aumenta del 50%)
+- `-h` o `rh` = pausa 𝄽
+
+Esempi: `Cmaj7h`, `Dm7q`, `G7e`, `-h` (pausa)
+
 ## Jazz Standards
 
 ### All The Things You Are
@@ -306,8 +318,76 @@ C | D | C | C
 4. **Click/Metronomo**: Il click si adatta automaticamente al time signature
 5. **Trasponi**: Cambia la tonalità modificando tutti gli accordi
 
+## 🎼 Esempi con Durate Specifiche
+
+### Take Five (5/4 con pause)
+```
+Take Five - Dave Brubeck - 176bpm - 5/4
+
+[Head]
+Emq -q Emq -q -q | Emq -q Emq -q -q |
+Bmq -q Bmq -q -q | Cmaj7h Dm7h -q |
+
+[Bridge]
+Amh -h -q | Dm7h G7h -q | Cmaj7w -q |
+Fmaj7h Em7h -q | Am7h -h -q |
+```
+
+### Ballad con durate lunghe
+```
+My Ballad - Original - 60bpm
+
+[Intro]
+Cmaj7w | -w | Dm7w | G7w |
+
+[Verse]
+Cmaj7h Am7h | Dm7h G7h |
+Fmaj7h Em7h | Am7w |
+Dm7h G7h | Cmaj7h. Fq | Em7h Dm7h | Cmaj7w |
+
+[Bridge]
+Fmaj7w | Bbmaj7w | Em7h Am7h | Dm7h G7h |
+```
+
+### Samba con ritmo sincopato
+```
+Samba do Brasil - Original - 120bpm
+
+[A Section]
+Am7q -e Dm7e | G7q Cmaj7q. Fmaje |
+Em7q -q Am7q -q | Dm7q G7q Cmaj7h |
+
+[B Section]
+Fmaj7q Em7q Dm7q Cmaj7q | Bm7b5e E7e Am7q -q |
+Dm7q -e G7e | Cmaj7w |
+```
+
+### Blues con durate
+```
+Slow Blues - Original - 80bpm
+
+[12-bar Blues]
+C7h -h | C7h -h |
+F7q C7q -h | C7h -h |
+G7q F7q C7h | C7h G7q -q |
+```
+
+### Jazz Standard con anticipazioni
+```
+Fast Bebop - Original - 220bpm
+
+[A Section]
+Dm7q G7q Cmaj7h | Am7q D7q Dm7h |
+Bm7b5e E7e Am7q -q | Dm7h G7h |
+
+[B Section]
+Cmaj7q. Am7e Dm7q G7q | Em7q. Am7e Dm7q G7q |
+Fmaj7h Em7h | Dm7h G7h |
+```
+
 ## Legenda Simboli
 
+### Accordi
 - `△` o `Maj7` = Settima maggiore
 - `7` = Settima di dominante
 - `m7` = Settima minore
@@ -318,6 +398,15 @@ C | D | C | C
 - `6` = Sesta
 - `#` = Diesis
 - `b` = Bemolle
+
+### Durate (opzionali)
+- `w` = 𝅝 semibreve (4 battiti)
+- `h` = 𝅗𝅥 minima (2 battiti)
+- `q` = ♩ semiminima (1 battito)
+- `e` = ♪ croma (0.5 battiti)
+- `s` = 𝅘𝅥𝅯 semicroma (0.25 battiti)
+- `.` = punto (aumenta del 50%)
+- `-` o `r` = pausa 𝄽
 
 Buon divertimento! 🎸
 

@@ -105,6 +105,22 @@ class ChordChartApp {
         this.saveBtn.addEventListener('click', () => this.saveChart());
         this.clearBtn.addEventListener('click', () => this.clearEditor());
         this.playBtn.addEventListener('click', () => this.togglePlay());
+        
+        // Duration Helper Buttons
+        document.querySelectorAll('.duration-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const duration = btn.getAttribute('data-duration');
+                this.insertDuration(duration);
+            });
+        });
+        
+        // Symbol buttons
+        document.querySelectorAll('.symbol-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const symbol = btn.getAttribute('data-symbol');
+                this.insertSymbol(symbol);
+            });
+        });
         this.metronomeCheckbox.addEventListener('change', (e) => {
             this.audioPlayer.setMetronome(e.target.checked);
         });
@@ -221,7 +237,11 @@ class ChordChartApp {
         
         for (const barPart of barParts) {
             // Split chords within a bar (by spaces)
-            const chords = barPart.split(/\s+/).filter(s => s);
+            const chordStrings = barPart.split(/\s+/).filter(s => s);
+            
+            // Parse ogni accordo con eventuale durata
+            const chords = chordStrings.map(chordStr => this.parseChordWithDuration(chordStr));
+            
             if (chords.length > 0) {
                 result.bars.push({
                     number: currentBarNumber++,
@@ -231,6 +251,85 @@ class ChordChartApp {
         }
         
         return result;
+    }
+    
+    /**
+     * Parse un singolo accordo con durata
+     * Esempi: Cmaj7h, Dm7q, -h, rq
+     * Ritorna: { chord: "Cmaj7", duration: "h", isRest: false, beats: 2 }
+     */
+    parseChordWithDuration(chordStr) {
+        // Valori delle note in beats (per 4/4)
+        const durations = {
+            'w': 4,    // whole (semibreve)
+            'h': 2,    // half (minima)
+            'q': 1,    // quarter (semiminima)
+            'e': 0.5,  // eighth (croma)
+            's': 0.25  // sixteenth (semicroma)
+        };
+        
+        // Check se è una pausa
+        const restMatch = chordStr.match(/^(-|r)([whqes]\.?)$/);
+        if (restMatch) {
+            const durSymbol = restMatch[2].replace('.', '');
+            const hasDot = restMatch[2].includes('.');
+            let beats = durations[durSymbol] || 1;
+            if (hasDot) beats *= 1.5; // nota puntata
+            
+            return {
+                chord: '-',
+                duration: restMatch[2],
+                isRest: true,
+                beats: beats
+            };
+        }
+        
+        // Match accordo con durata: es. Cmaj7h, Dm7q.
+        const chordMatch = chordStr.match(/^(.+?)([whqes]\.?)$/);
+        if (chordMatch) {
+            const chordName = chordMatch[1];
+            const durSymbol = chordMatch[2].replace('.', '');
+            const hasDot = chordMatch[2].includes('.');
+            let beats = durations[durSymbol] || 1;
+            if (hasDot) beats *= 1.5; // nota puntata
+            
+            return {
+                chord: chordName,
+                duration: chordMatch[2],
+                isRest: false,
+                beats: beats
+            };
+        }
+        
+        // Nessuna durata specificata - retrocompatibilità
+        return {
+            chord: chordStr,
+            duration: null,
+            isRest: chordStr === '-' || chordStr === 'r',
+            beats: null // verrà calcolato dopo
+        };
+    }
+
+    /**
+     * Converte simbolo durata in simbolo musicale Unicode
+     */
+    getDurationSymbol(duration) {
+        if (!duration) return '';
+        
+        const symbols = {
+            'w': '𝅝',   // whole note
+            'w.': '𝅝.',  // dotted whole note
+            'h': '𝅗𝅥',   // half note
+            'h.': '𝅗𝅥.', // dotted half note
+            'q': '♩',   // quarter note
+            'q.': '♩.', // dotted quarter note
+            'e': '♪',   // eighth note
+            'e.': '♪.', // dotted eighth note
+            's': '𝅘𝅥𝅯',   // sixteenth note
+            's.': '𝅘𝅥𝅯.'  // dotted sixteenth note
+        };
+        
+        return symbols[duration] || duration;
     }
 
     // Renderer - Visualizza la chart (Band-in-a-Box style)
@@ -277,8 +376,24 @@ class ChordChartApp {
                 html += `<div class="bar-number">${bar.number}</div>`;
                 html += '<div class="bar-content">';
                 
-                for (const chord of bar.chords) {
-                    html += `<span class="chord-symbol">${this.escapeHtml(chord)}</span>`;
+                for (const chordObj of bar.chords) {
+                    // Se è un oggetto con durata, mostralo; altrimenti retrocompatibilità
+                    if (typeof chordObj === 'object' && chordObj.chord !== undefined) {
+                        const chordDisplay = chordObj.isRest ? '𝄽' : this.escapeHtml(chordObj.chord);
+                        const durationSymbol = this.getDurationSymbol(chordObj.duration);
+                        const chordClass = chordObj.isRest ? 'chord-symbol chord-rest' : 'chord-symbol';
+                        
+                        html += `<span class="${chordClass}">`;
+                        html += chordDisplay;
+                        if (chordObj.duration) {
+                            html += `<span class="duration-indicator">${durationSymbol}</span>`;
+                        }
+                        html += '</span>';
+                    } else {
+                        // Retrocompatibilità: stringa semplice
+                        const chordStr = typeof chordObj === 'string' ? chordObj : chordObj.chord || '';
+                        html += `<span class="chord-symbol">${this.escapeHtml(chordStr)}</span>`;
+                    }
                 }
                 
                 html += '</div>';
@@ -311,6 +426,30 @@ class ChordChartApp {
         
         // Reset play button state
         this.updatePlayButton(false);
+        
+        // Aggiungi click listeners alle battute per farle partire da lì
+        this.addBarClickListeners();
+    }
+    
+    addBarClickListeners() {
+        const barCells = this.chartPreview.querySelectorAll('.bar-cell');
+        barCells.forEach(barCell => {
+            barCell.addEventListener('click', (e) => {
+                const barNumberEl = barCell.querySelector('.bar-number');
+                if (barNumberEl && this.currentChart) {
+                    const barNumber = parseInt(barNumberEl.textContent);
+                    
+                    // Ferma riproduzione corrente se in corso
+                    if (this.audioPlayer.isPlaying) {
+                        this.audioPlayer.stop();
+                    }
+                    
+                    // Riproduci da questa battuta
+                    this.audioPlayer.playChart(this.currentChart, barNumber);
+                    this.updatePlayButton(true);
+                }
+            });
+        });
     }
 
     togglePlay() {
@@ -425,6 +564,49 @@ class ChordChartApp {
     clearEditor() {
         this.chartInput.value = '';
         this.currentEditingId = null;
+        this.updatePreview();
+    }
+    
+    /**
+     * Inserisce un simbolo di durata nella posizione del cursore
+     */
+    insertDuration(duration) {
+        const textarea = this.chartInput;
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const text = textarea.value;
+        
+        // Inserisci il simbolo di durata
+        const before = text.substring(0, start);
+        const after = text.substring(end);
+        textarea.value = before + duration + after;
+        
+        // Ripristina la posizione del cursore
+        const newPos = start + duration.length;
+        textarea.setSelectionRange(newPos, newPos);
+        textarea.focus();
+
+        // Aggiorna preview
+        this.updatePreview();
+    }
+    
+    insertSymbol(symbol) {
+        const textarea = this.chartInput;
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const text = textarea.value;
+        
+        // Inserisci il simbolo
+        const before = text.substring(0, start);
+        const after = text.substring(end);
+        textarea.value = before + symbol + after;
+        
+        // Ripristina la posizione del cursore
+        const newPos = start + symbol.length;
+        textarea.setSelectionRange(newPos, newPos);
+        textarea.focus();
+
+        // Aggiorna preview
         this.updatePreview();
     }
 

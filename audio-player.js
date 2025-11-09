@@ -34,16 +34,14 @@ class ChordPlayer {
 
         // Intervalli per tipi di accordi (semitoni dalla radice)
         const chordTypes = {
-            'maj': [0, 4, 7],           // Maggiore
+            'maj': [0, 4, 7],           // Maggiore (triade)
             'm': [0, 3, 7],             // Minore
             '7': [0, 4, 7, 10],         // Settima dominante
-            'maj7': [0, 4, 7, 11],      // Settima maggiore
-            'Δ': [0, 4, 7, 11],         // Settima maggiore (simbolo)
-            '△': [0, 4, 7, 11],         // Settima maggiore (simbolo alternativo)
+            'maj7': [0, 4, 7, 11],      // Settima maggiore (anche △, Maj7, Major7)
             'm7': [0, 3, 7, 10],        // Minore settima
-            'm7b5': [0, 3, 6, 10],      // Semidiminuito
-            'dim': [0, 3, 6],           // Diminuito
-            'aug': [0, 4, 8],           // Aumentato
+            'm7b5': [0, 3, 6, 10],      // Semidiminuito (anche ø)
+            'dim': [0, 3, 6],           // Diminuito (anche °)
+            'aug': [0, 4, 8],           // Aumentato (anche +)
             'sus4': [0, 5, 7],          // Sospeso 4
             'sus2': [0, 2, 7],          // Sospeso 2
             '6': [0, 4, 7, 9],          // Sesta
@@ -76,19 +74,22 @@ class ChordPlayer {
             type = 'maj';
         }
         
-        // Handle various notations
-        if (type.startsWith('maj7')) type = 'maj7';
-        else if (type.startsWith('m7b5')) type = 'm7b5';
-        else if (type.startsWith('m7')) type = 'm7';
-        else if (type.startsWith('m6')) type = 'm6';
-        else if (type.startsWith('m')) type = 'm';
-        else if (type.startsWith('7')) type = '7';
-        else if (type.startsWith('6')) type = '6';
-        else if (type === 'Δ' || type === '△' || type.includes('△') || type.includes('Δ')) type = 'Δ';
-        else if (type.includes('dim')) type = 'dim';
-        else if (type.includes('aug')) type = 'aug';
-        else if (type.includes('sus4')) type = 'sus4';
-        else if (type.includes('sus2')) type = 'sus2';
+        // Normalizza il type per il confronto (converti in lowercase per i confronti)
+        const typeLower = type.toLowerCase();
+        
+        // Handle various notations (case-insensitive)
+        if (typeLower.startsWith('maj7') || typeLower.startsWith('major7')) type = 'maj7';
+        else if (typeLower.startsWith('m7b5') || typeLower.includes('ø')) type = 'm7b5';
+        else if (typeLower.startsWith('m7') || typeLower.startsWith('min7')) type = 'm7';
+        else if (typeLower.startsWith('m6') || typeLower.startsWith('min6')) type = 'm6';
+        else if (typeLower.startsWith('m') || typeLower.startsWith('min')) type = 'm';
+        else if (typeLower.startsWith('7') || typeLower.startsWith('dom7')) type = '7';
+        else if (typeLower.startsWith('6')) type = '6';
+        else if (type === 'Δ' || type === '△' || type.includes('△') || type.includes('Δ')) type = 'maj7';
+        else if (typeLower.includes('dim') || type.includes('°')) type = 'dim';
+        else if (typeLower.includes('aug') || type.includes('+')) type = 'aug';
+        else if (typeLower.includes('sus4')) type = 'sus4';
+        else if (typeLower.includes('sus2')) type = 'sus2';
         
         return { root, type };
     }
@@ -187,7 +188,7 @@ class ChordPlayer {
     }
 
     // Play entire chart with metronome
-    playChart(chart) {
+    playChart(chart, startFromBar = 1) {
         if (this.isPlaying) {
             this.stop();
             return;
@@ -210,6 +211,10 @@ class ChordPlayer {
         
         for (const section of chart.sections) {
             for (const bar of section.bars) {
+                // Salta le battute precedenti a quella di partenza
+                if (bar.number < startFromBar) {
+                    continue;
+                }
                 // Schedule metronome clicks for this bar
                 for (let beat = 0; beat < beatsPerBar; beat++) {
                     const beatTime = audioStartTime + currentTime + (beat * beatDuration);
@@ -219,12 +224,64 @@ class ChordPlayer {
                     this.playClick(isAccent, beatTime);
                 }
                 
-                // Schedule chord playback
-                const chordDuration = barDuration / bar.chords.length;
+                // Schedule chord playback con durate
+                let chordTimeOffset = 0;
                 
-                bar.chords.forEach((chord, index) => {
-                    const playTime = audioStartTime + currentTime + (index * chordDuration);
-                    this.playChord(chord, chordDuration, playTime);
+                // PRIMO PASSO: Calcola lo spazio rimanente per accordi senza durata
+                let totalSpecifiedBeats = 0;
+                let chordsWithoutDuration = 0;
+                
+                bar.chords.forEach((chordObj) => {
+                    if (typeof chordObj === 'object' && chordObj.chord !== undefined) {
+                        if (chordObj.beats !== null && chordObj.beats !== undefined) {
+                            totalSpecifiedBeats += chordObj.beats;
+                        } else {
+                            chordsWithoutDuration++;
+                        }
+                    } else {
+                        // Retrocompatibilità: stringa semplice
+                        chordsWithoutDuration++;
+                    }
+                });
+                
+                // Calcola beat per accordi senza durata
+                const remainingBeats = beatsPerBar - totalSpecifiedBeats;
+                const beatsForUndefined = chordsWithoutDuration > 0 
+                    ? remainingBeats / chordsWithoutDuration 
+                    : 0;
+                
+                // SECONDO PASSO: Suona gli accordi con le durate corrette
+                bar.chords.forEach((chordObj) => {
+                    // Supporta sia oggetti con durata che stringhe semplici (retrocompatibilità)
+                    let chordSymbol, chordBeats;
+                    
+                    if (typeof chordObj === 'object' && chordObj.chord !== undefined) {
+                        chordSymbol = chordObj.chord;
+                        
+                        // Se ha durata specifica, usala; altrimenti usa lo spazio calcolato
+                        if (chordObj.beats !== null && chordObj.beats !== undefined) {
+                            chordBeats = chordObj.beats;
+                        } else {
+                            chordBeats = beatsForUndefined;
+                        }
+                        
+                        // Skip se è una pausa
+                        if (!chordObj.isRest) {
+                            const playTime = audioStartTime + currentTime + chordTimeOffset;
+                            const chordDuration = chordBeats * beatDuration;
+                            this.playChord(chordSymbol, chordDuration, playTime);
+                        }
+                    } else {
+                        // Retrocompatibilità: stringa semplice
+                        chordSymbol = typeof chordObj === 'string' ? chordObj : '';
+                        chordBeats = beatsForUndefined;
+                        
+                        const playTime = audioStartTime + currentTime + chordTimeOffset;
+                        const chordDuration = chordBeats * beatDuration;
+                        this.playChord(chordSymbol, chordDuration, playTime);
+                    }
+                    
+                    chordTimeOffset += chordBeats * beatDuration;
                 });
                 
                 // Schedule bar highlighting
